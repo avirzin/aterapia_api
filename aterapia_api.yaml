@@ -1,0 +1,439 @@
+openapi: 3.0.3
+info:
+  title: Aterapia 
+  description: API para acessar os serviços do Aterapia
+  version: v0.1.0
+  termsOfService: Link to Terms of Use for partners to API
+  contact:
+    name: API Support Team
+    url: https://www.aterapia.dev.br/contato
+    email: suporte@aterapia.com.br
+servers:
+- url: https://aterapia.com.br/api/v1
+  description: Development server
+- url: https://aterapia.com.br/api/v1
+  description: Staging server
+- url: https://aterapia.com.br/api/v1
+  description: Production server
+paths:
+  /auth/token:
+    post:
+      tags:
+      - Authentication
+      summary: Authentication method
+      description: Authenticates the client application.
+      operationId: authentication
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AuthRequestTO'
+      responses:
+        "200":
+          description: Confirmation of successfully generated access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseTO'
+  /keys:
+    get:
+      tags:
+      - Get key
+      summary: Gets the public key
+      description: Retrieve public key, necessary for all the further operations.
+      operationId: getKey
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful return of the getKey web method
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyResponseTo'
+  /users:
+    get:
+      tags:
+      - Users
+      summary: Obtém a lista completa dos usuários registrados
+      description: Lista todos os usuários diponíveis para o parceiro (ativos e inativos)
+      operationId: getUsers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful return of the getKey web method
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:  
+                  users:
+                    type: array
+                    minimum: 1
+                    $ref: '#/components/schemas/UserListItemTO'         
+  /user:
+    get:
+      tags:
+      - Users
+      summary: Obtém os dados do usuário específico
+      description: A partir do ID do usuário obtém seus dados adicionais
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful return of the getKey web method
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserTO'
+    post:
+      tags:
+      - Users
+      summary: Cria novo usuário
+      description: Cria novo usuário no sistema da Aterapia
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTO'
+      responses:
+        "200":
+          description: Retorna usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: '8571'
+                    description: Generated user ID
+                  status:
+                    type: string
+                    enum:
+                    - active
+                    - inactive
+                    example: active
+                    description: >
+                      Status do usuário:
+                        * active - Usuário ativo no sistema Aterapia
+                        * inactive - Usuário inativo no sistema Aterapia
+                  user:
+                    $ref: '#/components/schemas/UserTO'
+                
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseErrorTO'
+  /psychologists:
+    get:
+      tags:
+        - Psychologists
+      summary: Obtém os dados do usuário específico
+      description: A partir do ID do usuário obtém seus dados adicionais
+      operationId: getPsychologist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful return of the getKey web method
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:  
+                  psychologists:
+                    type: array
+                    minimum: 1
+                    items:
+                      properties:
+                        psychologist:
+                          $ref: '#/components/schemas/PsychologistTO'
+components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PsychologistTO:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Sigmund Freud
+          description: Nome completo do psicólogo
+        crp:
+          type: string
+          example: 55/66666
+          description: Número identificador no Conselho Regional de Psicologia
+        sessionsQty:
+          type: number
+          example: 251
+          description: Quantidade de sessões de terapia realizados
+        miniCurriculum:
+          type: string
+          example: >
+            Psicólogo Clínico, com abordagem comportamental - Terapia por
+            Contingências de Reforçamento para tratamento de ansiedade, pânico,
+            depressão, estresse, problemas no relacionamento afetivo em clínica
+            particular na cidade de Valinhos/SP há sete anos. Life Coach pela
+            Sociedade Brasileira de Coaching - São Paulo/SP.
+        specialities:
+          type: string
+          enum:
+            - depression
+            - ansiety
+            - stress
+            - phobias
+            - sexuality
+            - relationships
+            - family
+            - food
+            - selfSteem
+            - insecurity
+            - learningProblems
+            - compulsions
+            - procrastination
+            - others
+          example: 'sexuality'
+          description: >
+            Motivo que leva a buscar terapia:
+              * depression - Depressão
+              * ansiety - Terapia de casal
+              * stress - Terapia de casal
+              * phobias - Orientação dos pais
+              * sexuality - Sexualidade
+              * relationships - Relacionamentos
+              * family - Vida familiar
+              * professional - Vida profissional
+              * food - Educação alimentar
+              * selfSteem - Autoestima
+              * insecurity - Insegurança
+              * learningProblems - Dificuldade de aprendizagem
+              * compulsions - Compulsões
+              * procrastination - Procrastinação
+              * others -  Outros
+        contact:
+          type: array
+          items:
+            properties:
+              type:
+                type: string
+                enum:
+                  - website
+                  - instagram
+                example: 'website'
+                description: Tipo de contato
+              value:
+                type: string
+                example: 'www.website.com'
+                description: Valor do campo correspondente ao tipo de contato (por exemplo o próprio website ou nome do usuario no Instagram) 
+    UserListItemTO:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 4613
+          description: Id do paciente
+        name:
+          type: string
+          example: João da Silva
+          description: Nome completo do usuário
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          example: active
+          description: >
+            Status do usuário:
+              * active - Usuário ativo no sistema Aterapia
+              * inactive - Usuário inativo no sistema Aterapia
+    UserTO:
+      type: object
+      required:
+        - name
+        - email
+        - type
+        - mobile
+        - mdeication
+      properties:
+        name:
+          type: string
+          example: João da Silva
+          description: Nome completo do usuário
+        email:
+          type: string
+          example: john.doe@email.com
+          description: Email do usuário
+        type:
+          type: string
+          enum:
+          - private
+          - company
+          example: 'private'
+          description: >
+            Tipo de sessão:
+              * private - Sessão privada fornecida a o paciente
+              * company - Sessão fornecida por uma empresa para o paciente
+        sex:
+          type: string
+          enum:
+          - male
+          - female
+          - other
+          - unavailable
+          example: 'female'
+          description: >
+            Sexo:
+              * male - masculino
+              * feminino - feminino
+              * others - outro
+              * unavailable - 'Não informado'
+        mobile:
+          type: string
+          example: '+558725683546'
+          description: Telefone celular do paciente
+        therapyTime:
+          type: string
+          enum:
+            - lessThanYear
+            - moreThanYear
+            - never
+          example: 'less_than_year'
+          description: >
+            Tempo de terapia:
+              * lessThanYear - Fez menos de um ano
+              * moreThanYear - Fez mais de um ano
+              * never - Nunca fez terapia antes
+        therapyType:
+          type: string
+          enum:
+            - personal
+            - couple
+            - vocational_orientation
+            - parents_orientation
+          example: 'couples'
+          description: >
+            Descreve o tipo de terapia que o paciente procura
+            Tipo de sessão:
+              * personal - Terapia individual
+              * couple - Terapia de casal
+              * vocational_orientation - Terapia de casal
+              * parents_orientation - Orientação dos pais
+        medication:
+          type: boolean
+          example: 'false'
+          description: Se o pacienta faz o uso de algum medicamento
+        motive:
+          type: string
+          enum:
+            - depression
+            - ansiety
+            - stress
+            - phobias
+            - sexuality
+            - relationships
+            - family
+            - food
+            - selfSteem
+            - insecurity
+            - learningProblems
+            - compulsions
+            - procrastination
+            - others
+          example: 'sexuality'
+          description: >
+            Motivo que leva a buscar terapia:
+              * depression - Depressão
+              * ansiety - Terapia de casal
+              * stress - Terapia de casal
+              * phobias - Orientação dos pais
+              * sexuality - Sexualidade
+              * relationships - Relacionamentos
+              * family - Vida familiar
+              * professional - Vida profissional
+              * food - Educação alimentar
+              * selfSteem - Autoestima
+              * insecurity - Insegurança
+              * learningProblems - Dificuldade de aprendizagem
+              * compulsions - Compulsões
+              * procrastination - Procrastinação
+              * others -  Outros
+    AuthResponseTO:
+      type: object
+      properties:
+        tokenType:
+          type: string
+          default: 'bearer'
+        accessToken:
+          type: string
+          default: 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSlRUIiwia2lkIiA6ICJxY0FzMjlSNUFPbEltSFRobWJPR3lCYXI4aHZOdEo5Ni1GZGwyS2pVa1ZrIn0'
+        expiresIn:
+          type: string
+          default: 300
+    KeyResponseTo:
+      type: object
+      properties:
+        publicKey:
+          type: string
+          default: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAovmvIWCFqyrmyVIy6TPi3tuwZKq2kwfHyxX39NJSlk7YaOvIqWLYCWTB6diQQ2Jz94UgducaU+1vVKq9YvmH59QOjT9cLJKbIDxOksH2b4s8JJY/C0/KvAmcXyAe4HtvATmXZA6/8NklycywyHyL6n1jvk/zpRFjINYwKm7miOUrvl9KhWsC/TNglu0YIZvNe/9g3vou5kQc6sALFsjLd/3QsYWJa++f0Tt9chzX+jPxmAr2cQovqEWksKAC+ehMxGwiezBHcSf2HXEE3q3wl6jIz0iwnui53NqcHuM1+IdnDso4WaikEvzlwL5Ea/FWv+KVjomnm8eySmijGjNFpQIDAQAB'
+        expiresIn:
+          type: number
+          default: 300
+    ElementErrorTO:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    ResponseErrorBodyTO:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ElementErrorTO'
+    ResponseErrorHeaderTO:
+      type: object
+      properties:
+        X-Request-ID:
+          type: string
+          description: Cada solicitação de API possui um identificador de requisição
+            associado. Se você precisar entrar em contato conosco sobre uma requisição
+            específica, fornecer o identificador da requisição garantirá a resolução
+            mais rápida possível.
+    ResponseErrorTO:
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/ResponseErrorHeaderTO'
+        body:
+          $ref: '#/components/schemas/ResponseErrorBodyTO'
+    AuthRequestTO:
+      type: object
+      description: Authentication object
+      required:
+        - grantType
+        - username
+        - password
+      properties:
+        grantType:
+          type: string
+          default: 'password'
+        username:
+          type: string
+        password:
+          type: string
