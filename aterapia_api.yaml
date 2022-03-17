@@ -9,9 +9,9 @@ info:
     url: https://www.aterapia.dev.br/contato
     email: suporte@aterapia.com.br
 servers:
-- url: https://aterapia.com.br/api/v1
+- url: https://staging.aterapia.com.br/api/v1
   description: Development server
-- url: https://aterapia.com.br/api/v1
+- url: https://dev.aterapia.com.br/api/v1
   description: Staging server
 - url: https://aterapia.com.br/api/v1
   description: Production server
@@ -139,14 +139,14 @@ paths:
     get:
       tags:
         - Psychologists
-      summary: Obtém os dados do usuário específico
+      summary: Obtém os dados do psicólogo específico
       description: A partir do ID do usuário obtém seus dados adicionais
       operationId: getPsychologist
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Successful return of the getKey web method
+          description: Resposta bem sucedida do método getPsychologist
           content:
             application/json:
               schema:
@@ -156,9 +156,73 @@ paths:
                     type: array
                     minimum: 1
                     items:
-                      properties:
-                        psychologist:
-                          $ref: '#/components/schemas/PsychologistTO'
+                        $ref: '#/components/schemas/PsychologistTO'
+  /sessions:
+    get:
+      tags:
+        - Sessions
+      summary: Obtém os dados das sessões existentes
+      description: Obtém todas as sessões dentro do limite permitido de dados ou de acordo com data específica
+      operationId: getSessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resposta bem sucedida trazendo lista de sessões com seu respectivo status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:  
+                  psychologistId:
+                    type: number
+                    example: 431
+                    description: Identificado único do psicólogo
+                  sessions:
+                    type: array
+                    minimum: 1
+                    items:
+                      $ref: '#/components/schemas/DayScheduleTO'
+  /session:
+    patch:
+      tags:
+        - Sessions
+      summary: Atualiza os dados de uma determinada sessão
+      parameters:
+        - in: path
+          name: sessionId
+          schema: 
+            type: integer
+          required: true
+          example: 431
+          description: Identificador númerico da sessão a ser atualizada
+      description: Atualiza o status de uma determinada sessão para ativa ou cancelada
+      operationId: updateSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - available
+                  - canceled
+                  example: active
+                  description: >
+                    Status do horário:
+                      * available - Horário disponível para o agendamento
+                      * canceled - Horário cancelado
+      responses:
+        "200":
+          description: Resposta bem sucedida trazendo detalhes da sessão que foi atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTO' 
 components:
   securitySchemes:
     bearerAuth:            # arbitrary name for the security scheme
@@ -166,6 +230,39 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    SessionTO:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+          example: 1673
+          description: Identificador único de horário
+        time:
+          type: string
+          example: 17:00
+          description: 'Horário no formato de 24 horas, lembrando que os horários somente podem ser exibidos com step de 30 min. Exemplos: 17:00, 17:30, 18:00 e etc.'
+        status:
+          type: string
+          enum:
+          - available
+          - canceled
+          example: active
+          description: >
+            Status do horário:
+              * available - Horário disponível para o agendamento
+              * canceled - Horário cancelado
+    DayScheduleTO:
+      type: object
+      properties:
+        date:
+          type: string
+          example: '2022-02-21'
+          description: Data da sessão
+        sessions:
+          type: array
+          minimum: 1
+          items:
+            $ref: '#/components/schemas/SessionTO' 
     PsychologistTO:
       type: object
       properties:
@@ -173,6 +270,10 @@ components:
           type: string
           example: Sigmund Freud
           description: Nome completo do psicólogo
+        id:
+          type: number
+          example: 431
+          description: Número único do psicólogo
         crp:
           type: string
           example: 55/66666
