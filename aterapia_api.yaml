@@ -135,6 +135,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseErrorTO'
+    patch:
+        tags:
+        - Users
+        summary: Atualiza usuário existente
+        description: Atualizas o usuário existente no sistema da Aterapia
+        operationId: updateUser
+        security:
+          - bearerAuth: []
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTO'
+        responses:
+          "200":
+            description: Retorna usuário atualizado com sucesso
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: '8571'
+                      description: Generated user ID
+                    status:
+                      type: string
+                      enum:
+                      - active
+                      - inactive
+                      example: active
+                      description: >
+                        Status do usuário:
+                          * active - Usuário ativo no sistema Aterapia
+                          * inactive - Usuário inativo no sistema Aterapia
+                    user:
+                      $ref: '#/components/schemas/UserTO'
+                  
+          "400":
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ResponseErrorTO'
   /psychologists:
     get:
       tags:
@@ -162,7 +206,22 @@ paths:
       tags:
         - Sessions
       summary: Obtém os dados das sessões existentes
-      description: Obtém todas as sessões dentro do limite permitido de dados ou de acordo com data específica
+      parameters:
+        - in: query
+          name: psychologistId
+          schema: 
+            type: integer
+          required: true
+          example: 561
+          description: Identificador númerico do psicólogo
+        - in: query
+          name: date
+          schema: 
+            type: string
+          required: false
+          example: '2021-04-22'
+          description: Data da sessão
+      description: Obtém todas as sessões dentro do limite permitido de dados ou de acordo com data específica a partir do Id do psicologo
       operationId: getSessions
       security:
         - bearerAuth: []
